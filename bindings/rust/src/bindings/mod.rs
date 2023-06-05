@@ -179,6 +179,12 @@ impl Blob {
     }
 }
 
+impl AsRef<[u8]> for Blob {
+    fn as_ref(&self) -> &[u8] {
+        &self.bytes
+    }
+}
+
 impl Bytes32 {
     pub fn from_bytes(bytes: &[u8]) -> Result<Self, Error> {
         if bytes.len() != 32 {
@@ -244,7 +250,7 @@ impl KZGProof {
     }
 
     pub fn compute_kzg_proof(
-        blob: Blob,
+        blob: &Blob,
         z_bytes: Bytes32,
         kzg_settings: &KZGSettings,
     ) -> Result<(Self, Bytes32), Error> {
@@ -254,7 +260,7 @@ impl KZGProof {
             let res = compute_kzg_proof(
                 kzg_proof.as_mut_ptr(),
                 y_out.as_mut_ptr(),
-                &blob,
+                blob,
                 &z_bytes,
                 kzg_settings,
             );
@@ -267,7 +273,7 @@ impl KZGProof {
     }
 
     pub fn compute_blob_kzg_proof(
-        blob: Blob,
+        blob: &Blob,
         commitment_bytes: Bytes48,
         kzg_settings: &KZGSettings,
     ) -> Result<Self, Error> {
@@ -275,7 +281,7 @@ impl KZGProof {
         unsafe {
             let res = compute_blob_kzg_proof(
                 kzg_proof.as_mut_ptr(),
-                &blob,
+                blob,
                 &commitment_bytes,
                 kzg_settings,
             );
@@ -313,7 +319,7 @@ impl KZGProof {
     }
 
     pub fn verify_blob_kzg_proof(
-        blob: Blob,
+        blob: &Blob,
         commitment_bytes: Bytes48,
         proof_bytes: Bytes48,
         kzg_settings: &KZGSettings,
@@ -322,7 +328,7 @@ impl KZGProof {
         unsafe {
             let res = verify_blob_kzg_proof(
                 verified.as_mut_ptr(),
-                &blob,
+                blob,
                 &commitment_bytes,
                 &proof_bytes,
                 kzg_settings,

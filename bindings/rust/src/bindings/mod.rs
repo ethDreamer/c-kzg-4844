@@ -194,7 +194,7 @@ impl Drop for KZGSettings {
 }
 
 impl Blob {
-    pub fn from_bytes(bytes: &[u8]) -> Result<Self, Error> {
+    pub fn from_bytes(bytes: &[u8]) -> Result<Box<Self>, Error> {
         if bytes.len() != BYTES_PER_BLOB {
             return Err(Error::InvalidBytesLength(format!(
                 "Invalid byte length. Expected {} got {}",
@@ -202,12 +202,19 @@ impl Blob {
                 bytes.len(),
             )));
         }
-        let mut new_bytes = [0; BYTES_PER_BLOB];
-        new_bytes.copy_from_slice(bytes);
-        Ok(Self { bytes: new_bytes })
+
+        // Allocating space equivalent to Blob's size on the heap
+        let mut uninit_space = vec![0u8; std::mem::size_of::<Blob>()].into_boxed_slice();
+        let blob_ptr = uninit_space.as_mut_ptr() as *mut Blob;
+
+        unsafe {
+            (*blob_ptr).bytes.copy_from_slice(bytes);  // Direct copy from input slice
+            let init_box: Box<Blob> = Box::from_raw(blob_ptr);
+            Ok(init_box)
+        }
     }
 
-    pub fn from_hex(hex_str: &str) -> Result<Self, Error> {
+    pub fn from_hex(hex_str: &str) -> Result<Box<Self>, Error> {
         Self::from_bytes(&hex_to_bytes(hex_str)?)
     }
 }

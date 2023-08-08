@@ -207,6 +207,31 @@ impl Blob {
         Ok(Self { bytes: new_bytes })
     }
 
+    pub fn from_bytes_boxed(bytes: &[u8]) -> Result<Box<Self>, Error> {
+        if bytes.len() != BYTES_PER_BLOB {
+            return Err(Error::InvalidBytesLength(format!(
+                "Invalid byte length. Expected {} got {}",
+                BYTES_PER_BLOB,
+                bytes.len(),
+            )));
+        }
+
+        unsafe {
+            // Directly allocate uninitialized memory for Blob on the heap
+            let layout = std::alloc::Layout::new::<Blob>();
+            let ptr = std::alloc::alloc(layout) as *mut Blob;
+
+            if ptr.is_null() {
+                std::alloc::handle_alloc_error(layout);
+            }
+
+            // Initialize the Blob's bytes
+            (*ptr).bytes.copy_from_slice(bytes);
+
+            Ok(Box::from_raw(ptr))
+        }
+    }
+
     pub fn from_hex(hex_str: &str) -> Result<Self, Error> {
         Self::from_bytes(&hex_to_bytes(hex_str)?)
     }

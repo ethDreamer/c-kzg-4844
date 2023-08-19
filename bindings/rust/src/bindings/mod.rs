@@ -33,6 +33,7 @@ use {
 use std::ffi::CString;
 use std::mem::MaybeUninit;
 use std::path::PathBuf;
+use std::sync::Arc;
 
 pub const BYTES_PER_G1_POINT: usize = 48;
 pub const BYTES_PER_G2_POINT: usize = 96;
@@ -352,7 +353,7 @@ impl KZGProof {
     }
 
     pub fn verify_blob_kzg_proof(
-        blob: &Blob,
+        blob: Arc<Blob>,
         commitment_bytes: Bytes48,
         proof_bytes: Bytes48,
         kzg_settings: &KZGSettings,
@@ -361,7 +362,7 @@ impl KZGProof {
         unsafe {
             let res = verify_blob_kzg_proof(
                 verified.as_mut_ptr(),
-                blob,
+                blob.as_ref(),
                 &commitment_bytes,
                 &proof_bytes,
                 kzg_settings,
